@@ -1,0 +1,154 @@
+using System;
+
+public interface IShippingStrategy
+{
+    double CalculateShippingCost(double weight, double distance);
+}
+
+public class StandardShippingStrategy : IShippingStrategy
+{
+    public double CalculateShippingCost(double weight, double distance)
+    {
+        return weight * 0.5 + distance * 0.1;
+    }
+}
+
+public class ExpressShippingStrategy : IShippingStrategy
+{
+    public double CalculateShippingCost(double weight, double distance)
+    {
+        return weight * 0.75 + distance * 0.2 + 10;
+    }
+}
+
+public class InternationalShippingStrategy : IShippingStrategy
+{
+    public double CalculateShippingCost(double weight, double distance)
+    {
+        return weight * 1.0 + distance * 0.5 + 15;
+    }
+}
+
+public class DeliveryContext
+{
+    private IShippingStrategy _shipping;
+    
+    public DeliveryContext(IShippingStrategy strategy)
+    {
+        this._shipping = strategy;
+    }
+
+    public double CalculateShipping(double weight, double distance)
+    {
+        return _shipping.CalculateShippingCost(weight, distance);
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        DeliveryContext delivery = null;
+        int typeDelivery = 1;
+
+        if (typeDelivery == 1)
+        {
+            delivery = new DeliveryContext(new StandardShippingStrategy());
+        }
+        else if (typeDelivery == 2)
+        {
+            delivery = new DeliveryContext(new ExpressShippingStrategy());
+        }
+        else if (typeDelivery == 3)
+        {
+            delivery = new DeliveryContext(new InternationalShippingStrategy());
+        }
+
+        if (delivery != null)
+        {
+            var cost = delivery.CalculateShipping(700, 50);
+            Console.WriteLine("Cost of delivery: {0}", cost);
+        }
+        else
+        {
+            Console.WriteLine("Invalid delivery type.");
+        }
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+public interface IObserver
+{
+    void Update(float temperature);
+}
+
+public interface ISubject
+{
+    void RegisterObserver(IObserver observer);
+    void UnregisterObserver(IObserver observer);
+    void NotifyObservers();
+}
+
+public class WeatherStation : ISubject
+{
+    private List<IObserver> observers;
+    private float temperature;
+
+    public WeatherStation()
+    {
+        observers = new List<IObserver>();
+    }
+
+    public void SetTemperature(float temperature)
+    {
+        this.temperature = temperature;
+        NotifyObservers();
+    }
+
+    public void NotifyObservers()
+    {
+        foreach (IObserver observer in observers)
+        {
+            observer.Update(this.temperature);
+        }
+    }
+
+    public void RegisterObserver(IObserver observer)
+    {
+        observers.Add(observer);
+    }
+
+    public void UnregisterObserver(IObserver observer)
+    {
+        observers.Remove(observer);
+    }
+}
+
+public class WeatherDisplay : IObserver
+{
+    public void Update(float temperature)
+    {
+        Console.WriteLine("Temperature changed to {0}°C", temperature);
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        WeatherStation station = new WeatherStation();
+        WeatherDisplay display = new WeatherDisplay();
+
+        station.RegisterObserver(display);
+
+        Random rnd = new Random();
+        while (true)
+        {
+            station.SetTemperature((float)rnd.Next(-30, 50));
+            Thread.Sleep(3000);
+        }
+    }
+}
